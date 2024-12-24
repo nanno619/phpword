@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\ImageHandlerController;
 
 Route::resource('questions', QuestionController::class)->shallow();
 // Route::get('/questions', [QuestionController::class, 'index'])->name('questions.index');
@@ -14,3 +15,5 @@ Route::get('/questions/{question}/download', [QuestionController::class, 'downlo
 
 Route::get('/cetakalljawapan', [QuestionController::class, 'cetakalljawapan2'])->name('questions.downloadAll');
 Route::get('/cetakjawapan/{question}', [QuestionController::class, 'downloadDocx'])->name('questions.cetakjawapan');
+Route::post('/upload_image', [ImageHandlerController::class, 'upload'])->name('upload.image');
+Route::post('/delete_image', [ImageHandlerController::class, 'deleteImage']);

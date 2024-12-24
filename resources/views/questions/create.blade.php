@@ -2,6 +2,7 @@
 
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/froala-editor@latest/css/froala_editor.pkgd.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/froala-editor@latest/css/plugins/image.min.css" rel="stylesheet">
 @endpush
 
 @section('content')
@@ -68,12 +69,56 @@
 @endsection
 
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/froala-editor@latest/js/froala_editor.pkgd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/froala-editor@latest/js/plugins/image.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize Froala Editor for Soalan
         new FroalaEditor('#soal_soalan', {
             heightMin: 200,
+
+            toolbarButtons: ['bold', 'italic', 'underline', 'strikeThrough', 'fontFamily',
+                'fontSize', 'color', 'inlineStyle', 'paragraphStyle',
+                'paragraphFormat', 'align', 'formatOL', 'formatUL', 'outdent', 'indent',
+                'insertTable','insertImage',
+                'undo', 'redo', 'html'
+            ],
+
+            imageEditButtons: ['imageAlign', 'imageCaption', 'imageRemove', '|', 'imageDisplay', 'imageSize'],
+            imageInsertButtons: ['imageBack', '|', 'imageUpload'],
+            imageUploadParams: {
+              _token: $('meta[name="csrf-token"]').attr('content') // Include CSRF token
+            },
+
+            // Set the image upload URL.
+            imageUploadURL: '/upload_image',
+
+            // Set request type.
+            imageUploadMethod: 'POST',
+
+            // Allow to upload PNG and JPG.
+            imageAllowedTypes: ['jpeg', 'jpg', 'png'],
+
+            events: {
+                'image.removed': function ($img) {
+                    const imageURL = $img.attr('src');
+                    $.ajax({
+                        url: '/delete_image',
+                        method: 'POST',
+                        data: {
+                            image: imageURL,
+                            _token: $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function (response) {
+                            console.log('Image deleted successfully:', response);
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error deleting image:', error);
+                        }
+                    });
+                },
+            }
         });
 
         // Initialize Froala Editor for Jawapan
