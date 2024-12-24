@@ -52,7 +52,13 @@
                                             Edit
                                         </a>
 
-                                        <a href="{{ route('questions.cetakjawapan', $question->soal_id) }}"
+                                        {{-- <a href="{{ route('questions.cetakjawapan', $question->soal_id) }}"
+                                           class="btn btn-sm btn-info">
+                                            Download
+                                        </a> --}}
+
+                                        <a href="javascript:void(0)"
+                                           onclick="downloadQuestion({{ $question->soal_id }})"
                                            class="btn btn-sm btn-info">
                                             Download
                                         </a>
@@ -82,3 +88,34 @@
     </div>
 </div>
 @endsection
+@push('scripts')
+<script type="text/javascript">
+    function exportToWord(html, filename = 'document.doc') {
+    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' " +
+        "xmlns:w='urn:schemas-microsoft-com:office:word' " +
+        "xmlns='http://www.w3.org/TR/REC-html40'>" +
+        "<head><meta charset='utf-8'><title>Export HTML to Word</title></head><body>";
+    const footer = "</body></html>";
+    const sourceHTML = header + html + footer;
+
+    const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+    const fileDownload = document.createElement("a");
+    document.body.appendChild(fileDownload);
+    fileDownload.href = source;
+    fileDownload.download = filename;
+    fileDownload.click();
+    document.body.removeChild(fileDownload);
+    }
+
+    // Function to handle single question export
+    function downloadQuestion(questionId) {
+        console.log(questionId);
+        fetch(`/cetakjawapan/${questionId}`)
+            .then(response => response.json())
+            .then(data => {
+                exportToWord(data.html, `question_${questionId}.doc`);
+            })
+            .catch(error => console.error('Error:', error));
+    }
+</script>
+@endpush

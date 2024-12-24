@@ -3,10 +3,10 @@
 <head>
     <title>Your App</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    @yield('styles')
+    @stack('styles')
 </head>
 <body>
     @yield('content')
-    @yield('scripts')
+    @stack('scripts')
 </body>
 </html>

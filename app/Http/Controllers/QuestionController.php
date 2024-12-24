@@ -5,7 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Question;
 use Illuminate\Http\Request;
+use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\Shared\Html;
+use App\Services\HtmlToPhpWordParser;
+use PhpOffice\PhpWord\Element\TextRun;
 use PhpOffice\PhpWord\TemplateProcessor;
+use App\Services\CustomTemplateProcessor;
 
 class QuestionController extends Controller
 {
@@ -16,7 +21,9 @@ class QuestionController extends Controller
             ->orderBy('soal_soalan_no')
             ->get();
 
-        return view('questions.index', compact('questions'));
+        return view('questions.index', [
+            'questions' => $questions
+        ]);
     }
 
     public function create()
@@ -57,6 +64,39 @@ class QuestionController extends Controller
         }
     }
 
+    public function edit(Question $question)
+    {
+        $users = User::all();
+        return view('questions.edit', [
+            'users' => $users,
+            'question' => $question,
+        ]);
+    }
+
+    public function update(Request $request, Question $question)
+    {
+        $validated = $request->validate([
+            'soal_adun' => 'required|exists:users,id',
+            'soal_soalan' => 'required',
+            'soal_jawapan' => 'required',
+        ]);
+
+        try {
+            // Update question
+            $question->update([
+                'soal_soalan' => $validated['soal_soalan'],
+                'soal_jawapan' => $validated['soal_jawapan'],
+                'soal_adun' => $validated['soal_adun'],
+            ]);
+
+            return to_route('questions.index')->with('success', 'Question updated successfully!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Error creating question: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
     public function destroy(Question $question)
     {
         try {
@@ -67,37 +107,71 @@ class QuestionController extends Controller
         }
     }
 
-    public function cetakjawapan(Question $question)
+    public function cetakalljawapan2()
     {
-        $templatePath = storage_path("app/public/templates/Lisan/template.docx");
+        $questions = Question::with('user')  // Eager load user relationship
+            ->orderBy('soal_adun')
+            ->orderBy('soal_soalan_no')
+            ->get();
+
+        $templatePath = storage_path("app/public/templates/Lisan/template_all.docx");
         \PhpOffice\PhpWord\Settings::setOutputEscapingEnabled(true);
         $templateProcessor = new TemplateProcessor($templatePath);
+        // Use custom template processor instead of the default one
+        // $templateProcessor = new \App\Services\CustomTemplateProcessor($templatePath);
 
-        $question->load('user');
 
-        $templateProcessor->setValue('name', strtoupper($question->user->name));
-        $templateProcessor->setValue('question_number', $question->soal_soalan_no);
-        $templateProcessor->setValue('question', $question->soal_soalan);
-        $templateProcessor->setValue('answer', $question->soal_jawapan);
+        // dd($questions);
 
-        // Set filename
-        $fileName = 'Cetakan_Jawapan.docx';
+        // $test = '<w:p><w:r><w:t>test1</w:t></w:r></w:p><w:p><w:r><w:t>test2</w:t></w:r></w:p>';
 
-        // Use storage_path for temporary file storage
-        $tempPath = storage_path('app/public/temp/' . $fileName);
+        // $templateProcessor->setValue('question', $test);
 
-        // Ensure the temporary directory exists
-        if (!file_exists(dirname($tempPath))) {
-            mkdir(dirname($tempPath), 0755, true);
-        }
+        // Define your HTML content
+        $htmlContent = "<p>test1</p><p>test2</p>";
 
-        $templateProcessor->saveAs($tempPath);
+        // Process the HTML and append it to a new section (or replace a placeholder)
+        $doc = new \PhpOffice\PhpWord\PhpWord();
+        $section = $doc->addSection();
+        Html::addHtml($section, $htmlContent);
 
-        // Send the file for download
-        $response = response()->download($tempPath, $fileName);
+        // Replace the placeholder in the template with the rendered content
+        $placeholder = 'question'; // Replace with your actual placeholder name
+        // $templateProcessor->setValue($placeholder, $renderedContent);
 
-        $response->deleteFileAfterSend(true);
+        // Clone the main template for each ADUN
+        $templateProcessor->cloneBlock('block_main', count($questions), true, true);
 
-        return $response;
+        // foreach ($questions as $index => $question) {
+        //     $id = $index + 1;
+
+        // }
+        // dd($id);
+
+        $pathToSave = storage_path('app/public/templates/Lisan/generated_file_' . rand(1, 300) . '.docx');
+
+        $templateProcessor->saveAs($pathToSave);
+
+        header('Content-Description: File Transfer');
+        header('Content-Disposition: attachment; filename=generated_file_' . rand(1, 300) . '.docx');
+        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+
+        readfile($pathToSave);
+    }
+
+    public function downloadDocx(Question $question)
+    {
+        $data = [
+            'question' => $question,
+        ];
+
+        $htmlContent = view('questions.single-export', $data)->render();
+
+        // Prepare single question HTML content
+        // $htmlContent = view('questions.single-export', compact('question'))->render();
+
+        return response()->json([
+            'html' => $htmlContent
+        ]);
     }
 }

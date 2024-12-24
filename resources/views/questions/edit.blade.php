@@ -11,7 +11,7 @@
             <a href="{{ route('questions.index') }}" class="btn btn-warning">Back</a>
             <div class="card">
 
-                <div class="card-header">Create New Question</div>
+                <div class="card-header">Update Question</div>
 
                 <div class="card-body">
                     @if (session('success'))
@@ -26,15 +26,15 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('questions.store') }}">
+                    <form method="POST" action="{{ route('questions.update', $question) }}">
                         @csrf
-
+                        @method('PUT')
                         <div class="mb-3">
                             <label for="soal_adun" class="form-label">Select User</label>
                             <select name="soal_adun" id="soal_adun" class="form-control @error('soal_adun') is-invalid @enderror" required>
                                 <option value="">Select User</option>
                                 @foreach($users as $user)
-                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                    <option value="{{ $user->id }}" {{ $question->soal_adun == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
                                 @endforeach
                             </select>
                             @error('soal_adun')
@@ -44,7 +44,7 @@
 
                         <div class="mb-3">
                             <label for="soal_soalan" class="form-label">Soalan</label>
-                            <textarea name="soal_soalan" id="soal_soalan" class="form-control @error('soal_soalan') is-invalid @enderror"></textarea>
+                            <textarea name="soal_soalan" id="soal_soalan" class="form-control @error('soal_soalan') is-invalid @enderror">{{ $question->soal_soalan }}</textarea>
                             @error('soal_soalan')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -52,7 +52,7 @@
 
                         <div class="mb-3">
                             <label for="soal_jawapan" class="form-label">Jawapan</label>
-                            <textarea name="soal_jawapan" id="soal_jawapan" class="form-control @error('soal_jawapan') is-invalid @enderror"></textarea>
+                            <textarea name="soal_jawapan" id="soal_jawapan" class="form-control @error('soal_jawapan') is-invalid @enderror">{{ $question->soal_jawapan }}</textarea>
                             @error('soal_jawapan')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -74,6 +74,7 @@
         // Initialize Froala Editor for Soalan
         new FroalaEditor('#soal_soalan', {
             heightMin: 200,
+            toolbarButtons: [],
         });
 
         // Initialize Froala Editor for Jawapan
