@@ -46,12 +46,17 @@
    php artisan migrate
    ```
 
-7. **Create storage link**
+7. **DB Seed**
+   ```bash
+   php artisan db:seed
+   ```
+
+8. **Create storage link**
    ```bash
    php artisan storage:link
    ```
 
-8. **Build assets**
+9. **Build assets**
    ```bash
    npm run dev
    ```
